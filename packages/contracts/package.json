@@ -1,0 +1,11 @@
+{
+  "name": "@frontier0/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "forge build",
+    "test": "forge test -vv",
+    "fmt": "forge fmt",
+    "typecheck": "echo \"solidity package - no ts typecheck\""
+  }
+}

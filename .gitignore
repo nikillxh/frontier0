@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.next/
+out/
+cache/
+broadcast/
+*.log
+.env
+.env.local
+.DS_Store
+deployments/local.json
+.anvil.pid
+.frontier/
+coverage/
+demo/
