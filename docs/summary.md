@@ -22,24 +22,24 @@ sub-50% cabals. Agent-to-agent sub-bounties are guardrailed on-chain.
 
 ## Contracts (`packages/contracts/src`)
 
-- `Types.sol` — enums `Role`, `VerifType {Deterministic, Peer}`, `BountyStatus {Open, Finalized, Refunded}`.
-- `access/Auth.sol` — owner + operator access control base.
-- `lib/YumaConsensus.sol` — `consensusScore(scores, stakes, kappaBps)`, `closeness(score, consensus)`.
-- `AgentRegistry.sol` — agents: owner, role, stake, `spendBudget`, `maxPerTx`, paused, allowlist;
+- `Types.sol` - enums `Role`, `VerifType {Deterministic, Peer}`, `BountyStatus {Open, Finalized, Refunded}`.
+- `access/Auth.sol` - owner + operator access control base.
+- `lib/YumaConsensus.sol` - `consensusScore(scores, stakes, kappaBps)`, `closeness(score, consensus)`.
+- `AgentRegistry.sol` - agents: owner, role, stake, `spendBudget`, `maxPerTx`, paused, allowlist;
   operator hooks `spend`, `slashStake`; `kill` refunds stake. `canSolve/canVerify/stakeOf/ownerOf`.
-- `Reputation.sol` — `repOf` {score, totalEarned, solves, accurate, inaccurate}; operator-only
+- `Reputation.sol` - `repOf` {score, totalEarned, solves, accurate, inaccurate}; operator-only
   `recordSolve`, `recordVerification`; emits `SolveRecorded`, `VerificationRecorded` (used by UI to
   split solver vs verifier earnings).
-- `ProblemRegistry.sol` — problems: title, category, specRoot (0G Storage), `onchainSpec`, vtype, checker.
+- `ProblemRegistry.sol` - problems: title, category, specRoot (0G Storage), `onchainSpec`, vtype, checker.
 - `interfaces/IChecker.sol` + `checkers/FactorChecker.sol`, `checkers/PowChecker.sol`.
-- `BountyEscrow.sol` — core. `postBounty`, `createSubBounty` (guardrails), `submitSolution`,
+- `BountyEscrow.sol` - core. `postBounty`, `createSubBounty` (guardrails), `submitSolution`,
   `commitScore`, `revealScore`, `finalize` (deterministic vs peer), reward split (solver 80% /
   verifier pool 20% by closeness). Views: `getBounty`, `getSubmission`, `submissionsOf`,
   `verifiersOf`, `revealedVerifiersOf`, `scoreOf`, `isRevealed`, `consensusOf`, `bountyPhase`
   (0 commit / 1 reveal / 2 ready / 3 closed), `allBountyIds`. Bounty struct has `deadline`
   (commit cutoff) and `revealEnd`.
-- `script/Deploy.s.sol` — deploys all, wires operators, writes `$DEPLOY_OUT` JSON.
-- `test/Frontier.t.sol` — 6 tests: deterministic factor, peer collusion resistance (commit-reveal),
+- `script/Deploy.s.sol` - deploys all, wires operators, writes `$DEPLOY_OUT` JSON.
+- `test/Frontier.t.sol` - 6 tests: deterministic factor, peer collusion resistance (commit-reveal),
   forged-salt/unrevealed exclusion, sub-bounty guardrails, depth limit, kill-switch. `test/utils/MiniTest.sol`
   is a tiny cheatcode+assert base (no forge-std). `foundry.toml` has `via_ir = true`.
 
@@ -61,9 +61,9 @@ sub-50% cabals. Agent-to-agent sub-bounties are guardrailed on-chain.
 
 ## Agents (`packages/agents/src`)
 
-- `runtime.ts` — `Runtime` (viem public client, per-key wallet contracts, `ANVIL_KEYS`).
-- `strategies.ts` — `solveDeterministic` (factor/pow), `mineNonce`, spec/solution encoders.
-- `scenario.ts` — `runScenario({finalize, assert})`: registers 8 agents (honest + minority cabal),
+- `runtime.ts` - `Runtime` (viem public client, per-key wallet contracts, `ANVIL_KEYS`).
+- `strategies.ts` - `solveDeterministic` (factor/pow), `mineNonce`, spec/solution encoders.
+- `scenario.ts` - `runScenario({finalize, assert})`: registers 8 agents (honest + minority cabal),
   registers problems (pins specs to 0G Storage), posts bounties, solves, commits sealed scores,
   warps the anvil clock (`evm_setNextBlockTimestamp`) past commit then reveal windows, reveals,
   finalizes, writes `.frontier/scenario.json` (factions for the UI), asserts. Testnet branch =

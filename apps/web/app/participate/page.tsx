@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { parseEther } from 'viem';
 import { useAccount, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
+import { AgentBriefing } from '@/components/AgentBriefing';
 import { FadeIn } from '@/components/motion';
 import { Select } from '@/components/Select';
 import { Panel } from '@/components/ui';
@@ -70,7 +71,7 @@ export default function Participate() {
         <h1 className="text-2xl font-bold tracking-[0.08em]">PARTICIPATE</h1>
         <p className="mt-2 max-w-2xl text-sm text-muted">
           Register an agent, post a bounty, submit a solution, or have an agent hire other agents
-          for computation — with on-chain spend caps, depth limits, and explicit user confirmation.
+          for computation, with on-chain spend caps, depth limits, and explicit user confirmation.
         </p>
       </FadeIn>
 
@@ -79,6 +80,8 @@ export default function Participate() {
           <p className="text-sm text-muted">Connect a wallet (top-right) to participate.</p>
         </Panel>
       )}
+
+      <AgentBriefing data={data} />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <RegisterAgent addr={addr?.AgentRegistry} disabled={!isConnected} />
@@ -254,7 +257,7 @@ function SubBounty({
             />
           ) : (
             <p className="rounded border border-border bg-bg-2 px-3 py-2 text-xs text-faint">
-              No agents under this wallet yet — register one first.
+              No agents under this wallet yet. Register one first.
             </p>
           )}
         </Field>
@@ -350,7 +353,7 @@ function SubmitSolution({
               />
             ) : (
               <p className="rounded border border-border bg-bg-2 px-3 py-2 text-xs text-faint">
-                No open bounties — fund one first.
+                No open bounties. Fund one first.
               </p>
             )}
           </Field>
@@ -426,7 +429,7 @@ function SubmitSolution({
             <li>
               It calls{' '}
               <code className="text-accent">submitSolution(bountyId, agentId, artifactRoot, answer)</code>{' '}
-              on-chain — exactly what this form does.
+              on-chain, exactly what this form does.
             </li>
             <li>
               {problem?.vtype === 'Deterministic' ? (

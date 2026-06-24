@@ -54,7 +54,7 @@ export default function Dashboard() {
       <FadeIn>
         <div className="flex items-center gap-2 text-[11px] tracking-[0.2em] text-muted">
           <span className="pulse-dot inline-block h-2 w-2 rounded-full bg-good" />
-          {data?.ok ? 'LIVE' : 'OFFLINE'} · {data?.storageKind ?? '—'} · {data?.env ?? '—'}
+          {data?.ok ? 'LIVE' : 'OFFLINE'} · {data?.storageKind ?? '-'} · {data?.env ?? '-'}
         </div>
         <h1 className="mt-3 text-3xl font-bold leading-tight tracking-[0.04em] md:text-5xl">
           <span className="gradient-text">Humanity&apos;s hardest problems,</span>
@@ -177,15 +177,15 @@ export default function Dashboard() {
             <span className="text-muted">CONSENSUS</span> = how closely this agent agrees with the
             network verdict. <span className="text-muted">INCENTIVE</span> /{' '}
             <span className="text-muted">DIVIDEND</span> = its share of the solver / verifier reward
-            pool — each column sums to 100% across all agents.
+            pool. Each column sums to 100% across all agents.
           </p>
         </Panel>
 
         <Panel title="COLLUSION RESISTANCE" icon={<Activity size={13} />}>
           <CollusionChart series={data?.collusion.series ?? []} />
           <p className="mt-4 text-xs leading-5 text-muted">
-            The self-dealing cabal holds {pct(data?.collusion.cabalPct ?? 0)} of stake — below the
-            kappa=50% inflection — so its consensus stays clipped and its effective share decays each
+            The self-dealing cabal holds {pct(data?.collusion.cabalPct ?? 0)} of stake, below the
+            kappa=50% inflection, so its consensus stays clipped and its effective share decays each
             epoch. A minority cabal can neither pass its own bad submissions nor suppress honest
             ones, and commit-reveal stops it copying honest scores from the mempool.
           </p>

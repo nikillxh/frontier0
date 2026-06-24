@@ -84,5 +84,5 @@ echo "average: ${C_PURPLE}${avg}/10${C_RESET}   min axis: ${min}/10"
 if (( min >= 8 )); then
   ok "all axes >= 8"
 else
-  die "some axis < 8 — iterate and re-run"
+  die "some axis < 8 - iterate and re-run"
 fi

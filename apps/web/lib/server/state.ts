@@ -19,6 +19,27 @@ function rpcUrl(env: string): string {
   return process.env.NEXT_PUBLIC_RPC_URL ?? process.env.LOCAL_RPC_URL ?? 'http://127.0.0.1:8545';
 }
 
+/**
+ * Resolve the deployment. On Vercel/testnet the repo's deployments/*.json is not reliably
+ * present in the serverless bundle, so prefer the FRONTIER_DEPLOYMENT env var (a JSON blob of
+ * the deploy script output). Fall back to the on-disk file for local dev.
+ */
+function resolveDeployment(env: string): Deployment | null {
+  const raw = process.env.FRONTIER_DEPLOYMENT;
+  if (raw) {
+    try {
+      return JSON.parse(raw) as Deployment;
+    } catch {
+      // fall through to file
+    }
+  }
+  try {
+    return loadDeployment(env);
+  } catch {
+    return null;
+  }
+}
+
 function loadFactions(): Record<string, 'honest' | 'cabal'> {
   const path = resolve(REPO_ROOT, '.frontier/scenario.json');
   if (!existsSync(path)) return {};
@@ -39,11 +60,9 @@ const ETH = (wei: bigint, digits = 3): string => {
 
 export async function getState(): Promise<StateResponse> {
   const env = process.env.FRONTIER_ENV ?? 'local';
-  let dep: Deployment;
-  try {
-    dep = loadDeployment(env);
-  } catch (e: any) {
-    return emptyState(env, e?.message ?? 'no deployment');
+  const dep = resolveDeployment(env);
+  if (!dep) {
+    return emptyState(env, 'no deployment (set FRONTIER_DEPLOYMENT or run a deploy)');
   }
   const client = createPublicClient({ transport: http(rpcUrl(env)) }) as PublicClient;
   const factionsByName = loadFactions();

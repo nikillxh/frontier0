@@ -1,11 +1,13 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { REPO_ROOT, Role, SEED_PROBLEMS, VerifType } from '@frontier0/shared';
-import { getZeroG } from '@frontier0/zerog';
+import { getStorage, getZeroG } from '@frontier0/zerog';
 import { randomBytes } from 'node:crypto';
-import { type Hex, encodeAbiParameters, keccak256, parseEther } from 'viem';
+import { type Hex, encodeAbiParameters, keccak256, parseEther, stringToHex } from 'viem';
 import { ANVIL_KEYS, Runtime } from './runtime.js';
 import { onchainSpecFor, solveDeterministic } from './strategies.js';
+
+const ZERO_ADDR = '0x0000000000000000000000000000000000000000' as Hex;
 
 type Faction = 'honest' | 'cabal';
 
@@ -321,10 +323,11 @@ async function assertScenario(
   log('ALL ASSERTIONS PASSED');
 }
 
-// ---- testnet single-key smoke (faucet only funds one wallet) ----
+// ---- testnet seed (faucet only funds the deployer; everything runs from one key) ----
+// Registers the full problem catalogue and posts a couple of open bounties so the live app
+// has real content that anyone can browse and test against with their own wallet.
 async function runTestnetSmoke(log: (m: string) => void) {
   const rt = new Runtime('testnet');
-  const zg = await getZeroG('testnet');
   const pk = process.env.TESTNET_PRIVATE_KEY as Hex;
   if (!pk) throw new Error('TESTNET_PRIVATE_KEY required');
 
@@ -332,47 +335,77 @@ async function runTestnetSmoke(log: (m: string) => void) {
   const escrow = rt.escrowRead();
   const problems = rt.problemsRead();
 
+  // 0G Storage is best-effort: if the SDK/funded uploader is unavailable we fall back to a
+  // deterministic keccak root so seeding never blocks (the full spec text is on-chain anyway).
+  let storage: Awaited<ReturnType<typeof getStorage>> | null = null;
+  try {
+    storage = await getStorage('testnet');
+  } catch (e: any) {
+    log(`0G Storage unavailable (${(e?.message ?? '').split('\n')[0]}); using keccak spec roots`);
+  }
+  const rootFor = async (def: (typeof SEED_PROBLEMS)[number]): Promise<{ root: string; kind: string }> => {
+    if (storage) {
+      try {
+        const ref = await storage.put(JSON.stringify({ title: def.title, spec: def.spec }), def.key);
+        return { root: ref.root, kind: storage.kind };
+      } catch (e: any) {
+        log(`  storage put failed for ${def.key} (${(e?.message ?? '').split('\n')[0]}); keccak fallback`);
+      }
+    }
+    return { root: keccak256(stringToHex(def.spec)), kind: 'keccak-fallback' };
+  };
+
+  // 1. register a demo agent so the network and leaderboard are not empty
   const agentId = Number(await reg.read.nextAgentId());
   const regW = rt.write('AgentRegistryAbi', rt.dep.AgentRegistry, rt.walletFor(pk));
   await rt.wait(
-    await regW.write.registerAgent(['testnet-solver', Role.Both, parseEther('0.001'), 'agent://testnet'], {
-      value: parseEther('0.001'),
-    } as any),
+    await regW.write.registerAgent(
+      ['frontier-bot', Role.Both, parseEther('0.002'), 'agent://frontier-bot'],
+      { value: parseEther('0.002') } as any,
+    ),
   );
-  log(`registered testnet agent #${agentId}`);
+  log(`registered demo agent frontier-bot (#${agentId})`);
 
-  const def = SEED_PROBLEMS.find((d) => d.key === 'rsa-factor')!;
-  const ref = await zg.storage.put(JSON.stringify({ title: def.title, spec: def.spec }), def.key);
-  log(`pinned problem spec to 0G Storage: ${ref.root} via ${zg.storage.kind}`);
-
+  // 2. register the full problem catalogue (spec text on-chain; root pinned to 0G Storage)
   const probW = rt.write('ProblemRegistryAbi', rt.dep.ProblemRegistry, rt.walletFor(pk));
-  const pid = Number(await problems.read.nextProblemId());
-  await rt.wait(
-    await probW.write.registerProblem([
-      def.title,
-      def.category,
-      def.spec,
-      ref.root,
-      onchainSpecFor(def),
-      def.vtype,
-      rt.dep.FactorChecker,
-    ]),
-  );
+  const problemIds: Record<string, number> = {};
+  for (const def of SEED_PROBLEMS) {
+    const checker =
+      def.checker === 'factor'
+        ? rt.dep.FactorChecker
+        : def.checker === 'pow'
+          ? rt.dep.PowChecker
+          : ZERO_ADDR;
+    const { root, kind } = await rootFor(def);
+    const id = Number(await problems.read.nextProblemId());
+    await rt.wait(
+      await probW.write.registerProblem([
+        def.title,
+        def.category,
+        def.spec,
+        root,
+        onchainSpecFor(def),
+        def.vtype,
+        checker,
+      ]),
+    );
+    problemIds[def.key] = id;
+    log(`registered problem ${def.key} (#${id}) spec@${root.slice(0, 14)} via ${kind}`);
+  }
 
+  // 3. post a couple of open bounties with a real future deadline (no clock warping on testnet).
+  // Small rewards keep testnet 0G spend low.
   const escrowW = rt.write('BountyEscrowAbi', rt.dep.BountyEscrow, rt.walletFor(pk));
-  const bid = Number(await escrow.read.nextBountyId());
-  await rt.wait(
-    await escrowW.write.postBounty([BigInt(pid), BigInt(Math.floor(Date.now() / 1000) + 3600)], {
-      value: parseEther('0.002'),
-    } as any),
-  );
-  const { solution, detail } = solveDeterministic(def);
-  const solRef = await zg.storage.put(JSON.stringify({ detail }), 'sol-testnet');
-  await rt.wait(
-    await escrowW.write.submitSolution([BigInt(bid), BigInt(agentId), solRef.root, solution]),
-  );
-  await rt.wait(await escrowW.write.finalize([BigInt(bid)]));
-  const b: any = await escrow.read.getBounty([BigInt(bid)]);
-  log(`testnet bounty #${bid} finalized status=${b.status} winner=#${b.winningSubmissionId} (${detail})`);
-  log('testnet smoke complete.');
+  const deadline = BigInt(Math.floor(Date.now() / 1000) + 7 * 86_400); // 7 days
+  for (const key of ['rsa-factor', 'p-vs-np']) {
+    const id = Number(await escrow.read.nextBountyId());
+    await rt.wait(
+      await escrowW.write.postBounty([BigInt(problemIds[key]!), deadline], {
+        value: parseEther('0.005'),
+      } as any),
+    );
+    log(`posted open bounty for ${key} (#${id}) reward 0.005 0G, open 7 days`);
+  }
+
+  log('testnet seed complete: demo agent + 5 problems + 2 open bounties.');
 }

@@ -85,7 +85,7 @@ consensus = max { v : Σ_{i : sᵢ ≥ v} wᵢ  ≥  kappa · Σ wᵢ }
 
 **Why a minority cabal cannot win:** the consensus is a stake-weighted quantile at the 50% mark.
 Any coalition controlling `< 50%` of stake cannot by itself push the quantile up (to pass its own
-bad submission) or down (to bury an honest one) — the honest majority mass dominates the threshold.
+bad submission) or down (to bury an honest one), the honest majority mass dominates the threshold.
 Proven in `testPeerConsensusResistsMinorityCabal`
 ([packages/contracts/test/Frontier.t.sol](../packages/contracts/test/Frontier.t.sol)).
 
@@ -111,7 +111,7 @@ commitments are excluded.
 - **Per-tx cap** (`maxPerTx`) and **spend budget** (decremented atomically via `registry.spend`).
 - **Max delegation depth** (`maxDepth = 3`) to stop agent-hiring-agent recursion.
 - **Hire allowlist** per agent + owner **kill-switch** (`kill` pauses and refunds stake).
-- **Explicit user confirmation** required above `confirmThreshold` (0.05) — the `confirmed` flag is
+- **Explicit user confirmation** required above `confirmThreshold` (0.05): the `confirmed` flag is
   the signed user signal.
 
 ## Threat model & chain cooperation
@@ -120,7 +120,7 @@ commitments are excluded.
 | --- | --- |
 | Minority cabal capturing verdicts | Stake-weighted 50% quantile; `< 50%` stake cannot move it. |
 | Mempool score-copying / herding | Commit-reveal; scores sealed until the commit window closes. |
-| Reorg dropping a score tx before `finalize` | 0G Chain has BFT **instant finality** — no reorgs. |
+| Reorg dropping a score tx before `finalize` | 0G Chain has BFT **instant finality**, no reorgs. |
 | Chain throughput as a bottleneck | Only light settlement on-chain (~20 tx/bounty); heavy compute is off-chain on 0G Compute. Batching (multicall) is a future optimization. |
 | Runaway agent spend | On-chain per-tx cap, budget, depth, allowlist, kill-switch, confirmation. |
 | Sybil verifiers | Influence is stake-weighted, not per-identity; reputation slashing on outlier scores. |

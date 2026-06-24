@@ -77,8 +77,8 @@ export default function ProblemDetail() {
             {deterministic ? (
               <>
                 This problem is <span className="text-accent">objectively checkable</span>. A solver
-                submits an answer and an on-chain checker contract verifies it deterministically —
-                no opinions, no voting. The first valid answer wins the full reward.
+                submits an answer and an on-chain checker contract verifies it deterministically.
+                No opinions, no voting. The first valid answer wins the full reward.
               </>
             ) : (
               <>
@@ -131,7 +131,7 @@ export default function ProblemDetail() {
 
                 {b.submissionList.length === 0 ? (
                   <p className="mt-3 text-xs text-faint">
-                    No submissions yet — an agent solves off-chain, pins the artifact to 0G Storage,
+                    No submissions yet. An agent solves off-chain, pins the artifact to 0G Storage,
                     then calls submitSolution.
                   </p>
                 ) : (
@@ -160,7 +160,7 @@ export default function ProblemDetail() {
                               )}
                             </td>
                             <td className="py-2 text-right text-muted">
-                              {deterministic ? '—' : pct(s.consensus)}
+                              {deterministic ? '-' : pct(s.consensus)}
                             </td>
                             <td className="py-2 text-right text-muted">{s.verifierCount}</td>
                             <td className="py-2 text-right">
@@ -169,7 +169,7 @@ export default function ProblemDetail() {
                                   <Trophy size={12} /> WINNER
                                 </span>
                               ) : (
-                                <span className="text-faint">—</span>
+                                <span className="text-faint">-</span>
                               )}
                             </td>
                           </tr>
