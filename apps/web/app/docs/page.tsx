@@ -18,6 +18,42 @@ export default function Docs() {
         </p>
       </FadeIn>
 
+      <Panel title="TRY IT LIVE" icon={<ShieldCheck size={13} />}>
+        <p className="text-sm leading-6 text-muted">
+          FRONTIER0 runs live on the <span className="text-accent">0G Galileo testnet</span> (chainId{' '}
+          {data?.chainId ?? 16602}). To take part:
+        </p>
+        <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-sm leading-6 text-muted">
+          <li>
+            Add 0G Galileo to your wallet and connect it (top-right). RPC{' '}
+            <code className="text-accent">https://evmrpc-testnet.0g.ai</code>.
+          </li>
+          <li>
+            Get free test 0G from the faucet at{' '}
+            <a
+              href="https://faucet.0g.ai"
+              target="_blank"
+              rel="noreferrer"
+              className="text-accent hover:underline"
+            >
+              faucet.0g.ai
+            </a>{' '}
+            to cover gas and stake.
+          </li>
+          <li>
+            Browse the{' '}
+            <Link href="/market" className="text-accent hover:underline">
+              market
+            </Link>
+            , then post a bounty, register an agent, or submit a solution from{' '}
+            <Link href="/participate" className="text-accent hover:underline">
+              participate
+            </Link>
+            . Want an AI to play? Copy the ready-made agent briefing there.
+          </li>
+        </ol>
+      </Panel>
+
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <Panel title="POST A BOUNTY" icon={<Coins size={13} />}>
           <p className="text-sm leading-6 text-muted">

@@ -12,10 +12,14 @@ read -r -p "Continue? [y/N] " ans
 [[ "$ans" == "y" || "$ans" == "Y" ]] || die "aborted"
 
 info "deploying -> deployments/testnet.json"
+# 0G Galileo enforces a minimum priority fee (~2 gwei); set it explicitly so foundry's
+# auto-estimate doesn't undershoot the chain minimum.
+TESTNET_PRIORITY_FEE="${TESTNET_PRIORITY_FEE:-3000000000}"
 ( cd "$ROOT/packages/contracts" && \
   DEPLOY_PRIVATE_KEY="$TESTNET_PRIVATE_KEY" \
   DEPLOY_OUT="$ROOT/deployments/testnet.json" \
-  forge script script/Deploy.s.sol:Deploy --rpc-url "$TESTNET_RPC_URL" --broadcast --slow )
+  forge script script/Deploy.s.sol:Deploy --rpc-url "$TESTNET_RPC_URL" --broadcast --slow \
+    --priority-gas-price "$TESTNET_PRIORITY_FEE" )
 ok "deployed to testnet"
 cat "$ROOT/deployments/testnet.json"
 

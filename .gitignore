@@ -13,3 +13,4 @@ deployments/local.json
 .frontier/
 coverage/
 demo/
+.vercel
